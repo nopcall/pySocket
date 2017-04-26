@@ -6,10 +6,12 @@ import random
 import time
 import threading
 
+from concurrent.futures import *
+
 HOST = '127.0.0.1'
 PORT = 1234
 
-def say_hello():
+def say_hello(arg):
     client_socket = socket.socket()
     client_socket.connect((HOST, PORT))
     while True:
@@ -19,14 +21,8 @@ def say_hello():
         #print(buf.decode())
 
 def main():
-    threads = []
-    for i in range(0, 2048):
-        t = threading.Thread(target=say_hello)
-        threads.append(t)
-    for t in threads:
-        t.setDaemon(True)
-        t.start()
-    input("waiting ...")
+    executor = ThreadPoolExecutor(max_workers=2048)
+    executor.map(say_hello, [i for i in range(0, 2048)])
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@
 
 import socket
 import select
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 
 PORT = 1234
 MAX_LISTEN = 64
@@ -48,10 +48,10 @@ def handle_out(efd):
 
 server_socket = socket.socket()
 server_epoll = select.epoll()
-poll = ThreadPool(512)
+pool = ThreadPoolExecutor(max_workers=128)
 
-def put_poll(job, arg):
-    poll.map(job, arg)
+def put_pool(job, arg):
+    pool.map(job, arg)
 
 def main():
     server_socket.setblocking(False)
@@ -65,13 +65,13 @@ def main():
         events = server_epoll.poll(1) # timeout 1 sec
         for efd, estat in events:
             if efd == server_socket.fileno():
-                put_poll(handle_connect, (server_socket,))
+                put_pool(handle_connect, (server_socket,))
             elif estat & select.EPOLLHUP:
-                put_poll(handle_diconnect, (efd,))
+                put_pool(handle_diconnect, (efd,))
             elif estat & select.EPOLLIN:
-                put_poll(handle_in, (efd,))
+                put_pool(handle_in, (efd,))
             elif estat & select.EPOLLOUT:
-                put_poll(handle_out, (efd,))
+                put_pool(handle_out, (efd,))
 
 if __name__ == '__main__':
     main()
