@@ -34,6 +34,8 @@ def handle_diconnect(efd):
 def handle_in(efd):
     # got client message
     messages[efd] += clients[efd].recv(1024) # receiv 1024 bytes
+    if not messages[efd]: # socket disconnect
+        return
     print("{fd}:".format(fd=efd), messages[efd].decode())
     messages[efd] = b''
     responses[efd] = b'Got Your Message'
